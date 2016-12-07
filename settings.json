@@ -1,0 +1,6 @@
+{
+ "server": "irc.freenode.net",
+ "port": 6697,
+ "botname": "testbot",
+ "channel": "#test123"
+}
