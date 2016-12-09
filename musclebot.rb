@@ -29,36 +29,48 @@ bot = Cinch::Bot.new do
             message.reply "#{message.user.nick}: Ich wuerd halt a mal an moment wadden!"
           end
         else
-          if message_parts[1] == "add"
+          if message_parts[0] == "command" && message_parts[1] == "add"
             begin
-              database.add_message(message_parts[0], message_parts[2..-1].join(" "))
-              message.reply "#{message.user.nick}: Dange!"
-            rescue CommandNotFoundException
-              message.reply "#{message.user.nick}: Was willst du da hinzufuegen?! Den command gibts netmal..."
-            rescue MessageAlreadyAddedException
-              message.reply "#{message.user.nick}: Herrje... Die nachricht gibts doch scho laengst... erfind mal was neues... trottel..."
-            end
-          elsif message_parts[2] == "add"
-            begin
-              database.add_message(message_parts[0..1], message_parts[3..-1].join(" "))
-              message.reply "#{message.user.nick}: Dange!"
-            rescue CommandNotFoundException
-              message.reply "#{message.user.nick}: Was willst du da hinzufuegen?! Den command gibts netmal..."
-            rescue MessageAlreadyAddedException
-              message.reply "#{message.user.nick}: Herrje... Die nachricht gibts doch scho laengst... erfind mal was neues... trottel..."
+              database.add_command(message_parts[2])
+            rescue CommandAlreadyAddedException
+              message.reply "#{message.user.nick}: den command gibts doch scho du dapp!"
             end
           else
-            target = text.split.last
-            
-            if text == target
-              target = message.user.nick
-            end
-
-            random_message = database.random_message(text)
-            if !random_message
-              message.reply "#{message.user.nick}: du full-dapp! den command gibbet net!"
+            if message_parts[1] == "add"
+              begin
+                database.add_message(message_parts[0], message_parts[2..-1].join(" "))
+                message.reply "#{message.user.nick}: Dange!"
+              rescue CommandNotFoundException
+                message.reply "#{message.user.nick}: Was willst du da hinzufuegen?! Den command gibts netmal..."
+              rescue MessageAlreadyAddedException
+                message.reply "#{message.user.nick}: Herrje... Die nachricht gibts doch scho laengst... erfind mal was neues... trottel..."
+              end
+            elsif message_parts[2] == "add"
+              begin
+                database.add_message(message_parts[0..1], message_parts[3..-1].join(" "))
+                message.reply "#{message.user.nick}: Dange!"
+              rescue CommandNotFoundException
+                message.reply "#{message.user.nick}: Was willst du da hinzufuegen?! Den command gibts netmal..."
+              rescue MessageAlreadyAddedException
+                message.reply "#{message.user.nick}: Herrje... Die nachricht gibts doch scho laengst... erfind mal was neues... trottel..."
+              end
             else
-              message.reply "#{target}: #{random_message}"
+              target = text.split.last
+
+              if text == target
+                target = message.user.nick
+              end
+
+              begin
+                random_message = database.random_message(text)
+                if random_message
+                  message.reply "#{target}: #{random_message}"
+                else
+                  message.reply "#{message.user.nick}: solltest vielleicht erstmal paar nachrichten hinzufuegen, oder?!"
+                end
+              rescue CommandNotFoundException
+                message.reply "#{message.user.nick}: du full-dapp! den command gibbet net!"
+              end
             end
           end
         end

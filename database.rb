@@ -38,7 +38,9 @@ class Database
         command = received_message.split[0]
       end
 
-      if @entries[command]
+      if !@entries[command]
+        raise CommandNotFoundException.new
+      else
         length = @entries[command].length
 
         # if there are more than one pre defined messages, generate a random one
@@ -60,6 +62,25 @@ class Database
     }
 
     message
+  end
+
+  def add_command(command)
+    messages = {}
+    @lock.synchronize {
+      messages = JSON.parse(File.open(@db_file, "r").read)
+    }
+
+    if messages[command]
+      raise CommandAlreadyAddedException.new
+    end
+
+    messages[command] = []
+    @lock.synchronize {
+      File.open(@db_file, "w") { |file| file.write(JSON.pretty_generate(messages)) }
+    }
+
+    reload(true)
+    nil
   end
 
   def add_message(command, text)
