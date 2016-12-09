@@ -3,16 +3,16 @@ require "json"
 require "cinch"
 require "./database.rb"
 require "./exception.rb"
+require "./settings.rb"
 
-settings = JSON.parse(File.open("./settings.json", "r").read)
 database = Database.new("./messages.json")
 
 bot = Cinch::Bot.new do
   configure do |c|
-    c.server = settings["server"]
-    #c.port = settings["port"].to_i
-    c.nick = settings["botname"]
-    c.channels = [settings["channel"]]
+    c.server = Settings.get["server"]
+    #c.port = Settings.get["port"].to_i
+    c.nick = Settings.get["botname"]
+    c.channels = [Settings.get["channel"]]
   end
   
   on :message, /.+/ do |message|
@@ -24,35 +24,35 @@ bot = Cinch::Bot.new do
 
         if text == "reload"
           if database.reload
-            message.reply "#{message.user.nick}: Dange... Du dapp!"
+            message.reply "#{message.user.nick}: #{Settings.get["messages"]["thanks"]}"
           else
-            message.reply "#{message.user.nick}: Ich wuerd halt a mal an moment wadden!"
+            message.reply "#{message.user.nick}: #{Settings.get["messages"]["please_wait"]}"
           end
         else
           if message_parts[0] == "command" && message_parts[1] == "add"
             begin
               database.add_command(message_parts[2])
             rescue CommandAlreadyAddedException
-              message.reply "#{message.user.nick}: den command gibts doch scho du dapp!"
+              message.reply "#{message.user.nick}: #{Settings.get["messages"]["command_already_added"]}"
             end
           else
             if message_parts[1] == "add"
               begin
                 database.add_message(message_parts[0], message_parts[2..-1].join(" "))
-                message.reply "#{message.user.nick}: Dange!"
+                message.reply "#{message.user.nick}: #{Settings.get["messages"]["thanks"]}"
               rescue CommandNotFoundException
-                message.reply "#{message.user.nick}: Was willst du da hinzufuegen?! Den command gibts netmal..."
+                message.reply "#{message.user.nick}: #{Settings.get["messages"]["command_not_found"]}"
               rescue MessageAlreadyAddedException
-                message.reply "#{message.user.nick}: Herrje... Die nachricht gibts doch scho laengst... erfind mal was neues... trottel..."
+                message.reply "#{message.user.nick}: #{Settings.get["messages"]["message_already_added"]}"
               end
             elsif message_parts[2] == "add"
               begin
                 database.add_message(message_parts[0..1], message_parts[3..-1].join(" "))
-                message.reply "#{message.user.nick}: Dange!"
+                message.reply "#{message.user.nick}: #{Settings.get["messages"]["thanks"]}"
               rescue CommandNotFoundException
-                message.reply "#{message.user.nick}: Was willst du da hinzufuegen?! Den command gibts netmal..."
+                message.reply "#{message.user.nick}: #{Settings.get["messages"]["command_not_found"]}"
               rescue MessageAlreadyAddedException
-                message.reply "#{message.user.nick}: Herrje... Die nachricht gibts doch scho laengst... erfind mal was neues... trottel..."
+                message.reply "#{message.user.nick}: #{Settings.get["messages"]["message_already_added"]}"
               end
             else
               target = text.split.last
@@ -66,10 +66,10 @@ bot = Cinch::Bot.new do
                 if random_message
                   message.reply "#{target}: #{random_message}"
                 else
-                  message.reply "#{message.user.nick}: solltest vielleicht erstmal paar nachrichten hinzufuegen, oder?!"
+                  message.reply "#{message.user.nick}: #{Settings.get["messages"]["no_messages"]}"
                 end
               rescue CommandNotFoundException
-                message.reply "#{message.user.nick}: du full-dapp! den command gibbet net!"
+                message.reply "#{message.user.nick}: #{Settings.get["messages"]["command_not_found"]}"
               end
             end
           end

@@ -2,5 +2,13 @@
  "server": "irc.freenode.net",
  "port": 6697,
  "botname": "testbot",
- "channel": "#test123"
+ "channel": "#test123",
+ "messages": {
+   "thanks": "Danke!",
+   "command_not_found": "Das Kommando wurde nicht gefunden!",
+   "command_already_added": "Dieses Kommando gibt es bereits schon!",
+   "please_wait": "Du musst noch einen Moment warten.",
+   "message_already_added": "Diese Nachricht wurde bereits schon hinzugefuegt!",
+   "no_messages": "Dieses Kommando verfuegt zur Zeit ueber keine Nachrichten!"
+ }
 }
