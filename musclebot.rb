@@ -1,11 +1,20 @@
 #!/usr/bin/ruby
 require "json"
 require "cinch"
+require "thread"
 require "./database.rb"
 require "./exception.rb"
 require "./settings.rb"
+require "./pr0gram.rb"
 
 database = Database.new("./messages.json")
+
+Thread.new do
+  while true do
+    Pr0gram.refresh
+    sleep 60
+  end
+end
 
 bot = Cinch::Bot.new do
   configure do |c|
@@ -34,6 +43,16 @@ bot = Cinch::Bot.new do
               database.add_command(message_parts[2])
             rescue CommandAlreadyAddedException
               message.reply "#{message.user.nick}: #{Settings.get["messages"]["command_already_added"]}"
+            end
+          elsif message_parts[0] == "pr0"
+            data = Pr0gram.random_comment
+            user = data[:user]
+            comment = data[:comment].sample["content"].strip.gsub("\n", " ").gsub("\r", " ")
+
+            if message_parts[1]
+              message.reply "#{message_parts[1]}: #{comment} (#{user})"
+            else
+              message.reply "#{message.user.nick}: #{comment} (#{user})"
             end
           else
             if message_parts[1] == "add"
