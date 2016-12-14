@@ -46,13 +46,12 @@ bot = Cinch::Bot.new do
             end
           elsif message_parts[0] == "pr0"
             data = Pr0gram.random_comment
-            user = data[:user]
             comment = data[:comment].sample["content"].strip.gsub("\n", " ").gsub("\r", " ")
 
             if message_parts[1]
-              message.reply "#{message_parts[1]}: #{comment} (#{user})"
+              message.reply "#{message_parts[1]}: #{comment}"
             else
-              message.reply "#{message.user.nick}: #{comment} (#{user})"
+              message.reply "#{message.user.nick}: #{comment}"
             end
           else
             if message_parts[1] == "add"
