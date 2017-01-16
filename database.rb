@@ -29,6 +29,7 @@ class Database
   end
 
   def random_message(received_message)
+    target = nil
     message = nil
 
     @lock.synchronize {
@@ -42,6 +43,7 @@ class Database
         raise CommandNotFoundException.new
       else
         length = @entries[command].length
+        params = received_message[command.length+1..-1].split(" ")
 
         # if there are more than one pre defined messages, generate a random one
         # and prevent using the same message twice
@@ -58,10 +60,21 @@ class Database
         else
           message = @entries[command][0]
         end
+
+        target = params[0]
+        puts params
+
+        names = message.scan(/\$name(\d+)/)
+        names.each do |name|
+          name = name[0].to_i
+          if params[name-1]
+            message = message.sub("$name#{name}", params[name-1])
+          end
+        end
       end
     }
 
-    message
+    { target: target, message: message }
   end
 
   def add_command(command)

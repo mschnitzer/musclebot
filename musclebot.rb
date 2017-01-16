@@ -81,6 +81,13 @@ bot = Cinch::Bot.new do
 
               begin
                 random_message = database.random_message(text)
+                target = random_message[:target]
+                random_message = random_message[:message]
+
+                if !target
+                  target = message.user.nick
+                end
+
                 if random_message
                   message.reply "#{target}: #{random_message}"
                 else
