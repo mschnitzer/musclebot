@@ -43,7 +43,7 @@ class Database
         raise CommandNotFoundException.new
       else
         length = @entries[command].length
-        params = received_message[command.length+1..-1].split(" ")
+        params = received_message[command.length+1..-1]
 
         # if there are more than one pre defined messages, generate a random one
         # and prevent using the same message twice
@@ -61,14 +61,16 @@ class Database
           message = @entries[command][0]
         end
 
-        target = params[0]
-        puts params
+        if params
+          params = params.split(" ")
+          target = params[0]
 
-        names = message.scan(/\$name(\d+)/)
-        names.each do |name|
-          name = name[0].to_i
-          if params[name-1]
-            message = message.sub("$name#{name}", params[name-1])
+          names = message.scan(/\$name(\d+)/)
+          names.each do |name|
+            name = name[0].to_i
+            if params[name-1]
+              message = message.sub("$name#{name}", params[name-1])
+            end
           end
         end
       end
@@ -121,6 +123,32 @@ class Database
 
     reload(true)
     nil
+  end
+
+  def delete_message(command, text)
+    messages = {}
+    @lock.synchronize {
+      messages = JSON.parse(File.open(@db_file, "r").read)
+    }
+
+    if command.is_a?(Array)
+      command = command.join("_")
+    end
+
+    if !messages[command]
+      raise CommandNotFoundException.new
+    end
+
+    if messages[command].delete(text)
+      @lock.synchronize {
+        File.open(@db_file, "w") { |file| file.write(JSON.pretty_generate(messages)) }
+      }
+
+      reload(true)
+      return true
+    end
+
+    false
   end
 end
 

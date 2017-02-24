@@ -2,6 +2,7 @@
 require "json"
 require "cinch"
 require "thread"
+require "cheetah"
 require "./database.rb"
 require "./exception.rb"
 require "./settings.rb"
@@ -54,47 +55,68 @@ bot = Cinch::Bot.new do
               message.reply "#{message.user.nick}: #{comment}"
             end
           else
-            if message_parts[1] == "add"
-              begin
-                database.add_message(message_parts[0], message_parts[2..-1].join(" "))
-                message.reply "#{message.user.nick}: #{Settings.get["messages"]["thanks"]}"
-              rescue CommandNotFoundException
-                message.reply "#{message.user.nick}: #{Settings.get["messages"]["command_not_found"]}"
-              rescue MessageAlreadyAddedException
-                message.reply "#{message.user.nick}: #{Settings.get["messages"]["message_already_added"]}"
-              end
-            elsif message_parts[2] == "add"
-              begin
-                database.add_message(message_parts[0..1], message_parts[3..-1].join(" "))
-                message.reply "#{message.user.nick}: #{Settings.get["messages"]["thanks"]}"
-              rescue CommandNotFoundException
-                message.reply "#{message.user.nick}: #{Settings.get["messages"]["command_not_found"]}"
-              rescue MessageAlreadyAddedException
-                message.reply "#{message.user.nick}: #{Settings.get["messages"]["message_already_added"]}"
-              end
+            if /^[a-zA-Z0-9]+$/.match(message_parts[0]) && File.exists?("#{Settings.working_dir}/scripts/#{message_parts[0]}")
+              output = Cheetah.run("#{Settings.working_dir}/scripts/#{message_parts[0]}", message_parts[1], stdout: :capture)
+              message.reply output
             else
-              target = text.split.last
+              if message_parts[1] == "add"
+                begin
+                  database.add_message(message_parts[0], message_parts[2..-1].join(" "))
+                  message.reply "#{message.user.nick}: #{Settings.get["messages"]["thanks"]}"
+                rescue CommandNotFoundException
+                  message.reply "#{message.user.nick}: #{Settings.get["messages"]["command_not_found"]}"
+                rescue MessageAlreadyAddedException
+                  message.reply "#{message.user.nick}: #{Settings.get["messages"]["message_already_added"]}"
+                end
+              elsif message_parts[2] == "add"
+                begin
+                  database.add_message(message_parts[0..1], message_parts[3..-1].join(" "))
+                  message.reply "#{message.user.nick}: #{Settings.get["messages"]["thanks"]}"
+                rescue CommandNotFoundException
+                  message.reply "#{message.user.nick}: #{Settings.get["messages"]["command_not_found"]}"
+                rescue MessageAlreadyAddedException
+                  message.reply "#{message.user.nick}: #{Settings.get["messages"]["message_already_added"]}"
+                end
+              elsif message_parts[1] == "delete"
+                begin
+                  if !database.delete_message(message_parts[0], message_parts[2..-1].join(" "))
+                    message.reply "#{message.user.nick}: Gibts net..."
+                  end
+                rescue CommandNotFoundException
+                  message.reply "#{message.user.nick}: #{Settings.get["messages"]["command_not_found"]}"
+                end
+              elsif message_parts[2] == "delete"
+                begin
+                  if !database.delete_message(message_parts[0..1], message_parts[3..-1].join(" "))
+                    message.reply "#{message.user.nick}: Gibts net..."
+                  end
+                rescue CommandNotFoundException
+                  message.reply "#{message.user.nick}: #{Settings.get["messages"]["command_not_found"]}"
+                end
+              else
+                target = text.split.last
 
-              if text == target
-                target = message.user.nick
-              end
-
-              begin
-                random_message = database.random_message(text)
-                target = random_message[:target]
-                random_message = random_message[:message]
-
-                if !target
+                if text == target
                   target = message.user.nick
                 end
 
-                if random_message
-                  message.reply "#{target}: #{random_message}"
-                else
-                  message.reply "#{message.user.nick}: #{Settings.get["messages"]["no_messages"]}"
+                begin
+                  random_message = database.random_message(text)
+                  target = random_message[:target]
+                  random_message = random_message[:message]
+
+                  if !target
+                    target = message.user.nick
+                  end
+
+                  if random_message
+                    message.reply "#{target}: #{random_message}"
+                  else
+                    message.reply "#{message.user.nick}: #{Settings.get["messages"]["no_messages"]}"
+                  end
+                rescue CommandNotFoundException
+                  message.reply "#{message.user.nick}: #{Settings.get["messages"]["command_not_found"]}"
                 end
-              rescue CommandNotFoundException
-                message.reply "#{message.user.nick}: #{Settings.get["messages"]["command_not_found"]}"
               end
             end
           end
