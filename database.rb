@@ -33,43 +33,55 @@ class Database
     message = nil
 
     @lock.synchronize {
-      command = received_message.split[0..1].join(" ").sub(" ", "_")
+      if received_message.nil?
+        cmd_idx = 0
+        messages = 0
 
-      if !@entries[command]
-        command = received_message.split[0]
-      end
-
-      if !@entries[command]
-        raise CommandNotFoundException.new
-      else
-        length = @entries[command].length
-        params = received_message[command.length+1..-1]
-
-        # if there are more than one pre defined messages, generate a random one
-        # and prevent using the same message twice
-        if length > 1
-          while true do
-            msg = @entries[command][@random.rand(length)]
-            
-            if !@last_messages[command] || @last_messages[command] != msg
-              message = msg
-              @last_messages[command] = msg
-              break
-            end
-          end
-        else
-          message = @entries[command][0]
+        while messages == 0 do
+          cmd_idx = Random.rand(@entries.length)
+          messages = @entries.values[cmd_idx].length
         end
 
-        if params
-          params = params.split(" ")
-          target = params[0]
+        message = @entries.values[cmd_idx][Random.rand(messages)]
+      else
+        command = received_message.split[0..1].join(" ").sub(" ", "_")
 
-          names = message.scan(/\$name(\d+)/)
-          names.each do |name|
-            name = name[0].to_i
-            if params[name-1]
-              message = message.sub("$name#{name}", params[name-1])
+        if !@entries[command]
+          command = received_message.split[0]
+        end
+
+        if !@entries[command]
+          raise CommandNotFoundException.new
+        else
+          length = @entries[command].length
+          params = received_message[command.length+1..-1]
+
+          # if there are more than one pre defined messages, generate a random one
+          # and prevent using the same message twice
+          if length > 1
+            while true do
+              msg = @entries[command][@random.rand(length)]
+
+              if !@last_messages[command] || @last_messages[command] != msg
+                message = msg
+                @last_messages[command] = msg
+                break
+              end
+            end
+          else
+            message = @entries[command][0]
+          end
+
+          if params
+            params = params.split(" ")
+            target = params[0]
+
+            names = message.scan(/\$name(\d+)/)
+            names.each do |name|
+              name = name[0].to_i
+              if params[name-1]
+                message = message.sub("$name#{name}", params[name-1])
+              end
             end
           end
         end
